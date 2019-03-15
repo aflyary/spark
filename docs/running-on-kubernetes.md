@@ -334,6 +334,16 @@ the Spark application.
 
 ## Kubernetes Features
 
+### Configuration File
+
+Your Kubernetes config file typically lives under `.kube/config` in your home directory or in a location specified by the `KUBECONFIG` environment variable.  Spark on Kubernetes will attempt to use this file to do an initial auto-configuration of the Kubernetes client used to interact with the Kubernetes cluster.  A variety of Spark configuration properties are provided that allow further customising the client configuration e.g. using an alternative authentication method.
+
+### Contexts
+
+Kubernetes configuration files can contain multiple contexts that allow for switching between different clusters and/or user identities.  By default Spark on Kubernetes will use your current context (which can be checked by running `kubectl config current-context`) when doing the initial auto-configuration of the Kubernetes client.  
+
+In order to use an alternative context users can specify the desired context via the Spark configuration property `spark.kubernetes.context` e.g. `spark.kubernetes.context=minikube`.
+
 ### Namespaces
 
 Kubernetes has the concept of [namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
@@ -406,13 +416,23 @@ Some of these include:
 
 # Configuration
 
-See the [configuration page](configuration.html) for information on Spark configurations.  The following configurations are
-specific to Spark on Kubernetes.
+See the [configuration page](configuration.html) for information on Spark configurations.  The following configurations are specific to Spark on Kubernetes.
 
 #### Spark Properties
 
 <table class="table">
 <tr><th>Property Name</th><th>Default</th><th>Meaning</th></tr>
+<tr>
+  <td><code>spark.kubernetes.context</code></td>
+  <td><code>(none)</code></td>
+  <td>
+    The context from the user Kubernetes configuration file used for the initial 
+    auto-configuration of the Kubernetes client library.  When not specified then
+    the users current context is used.  <strong>NB:</strong> Many of the 
+    auto-configured settings can be overridden by the use of other Spark 
+    configuration properties e.g. <code>spark.kubernetes.namespace</code>.
+  </td>
+</tr>
 <tr>
   <td><code>spark.kubernetes.namespace</code></td>
   <td><code>default</code></td>
@@ -682,7 +702,7 @@ specific to Spark on Kubernetes.
   <td>
     Add the label specified by <code>LabelName</code> to the executor pods.
     For example, <code>spark.kubernetes.executor.label.something=true</code>.
-    Note that Spark also adds its own labels to the driver pod
+    Note that Spark also adds its own labels to the executor pod
     for bookkeeping purposes.
   </td>
 </tr>
@@ -970,6 +990,34 @@ specific to Spark on Kubernetes.
   Specify whether executor pods should be deleted in case of failure or normal termination.
   </td>
 </tr>
+<tr>
+  <td><code>spark.kubernetes.submission.connectionTimeout</code></td>
+  <td>10000</td>
+  <td>
+    Connection timeout in milliseconds for the kubernetes client to use for starting the driver.
+  </td>
+</tr>
+<tr>
+  <td><code>spark.kubernetes.submission.requestTimeout</code></td>
+  <td>10000</td>
+  <td>
+    Request timeout in milliseconds for the kubernetes client to use for starting the driver.
+  </td>
+</tr>
+<tr>
+  <td><code>spark.kubernetes.driver.connectionTimeout</code></td>
+  <td>10000</td>
+  <td>
+    Connection timeout in milliseconds for the kubernetes client in driver to use when requesting executors.
+  </td>
+</tr>
+<tr>
+  <td><code>spark.kubernetes.driver.requestTimeout</code></td>
+  <td>10000</td>
+  <td>
+    Request timeout in milliseconds for the kubernetes client in driver to use when requesting executors.
+  </td>
+</tr>
 </table>
 
 #### Pod template properties
@@ -1007,7 +1055,7 @@ See the below table for the full list of pod specifications that will be overwri
   <td>annotations</td>
   <td>Adds the annotations from <code>spark.kubernetes.{driver,executor}.annotation.*</code></td>
   <td>
-    Spark will add additional labels specified by the spark configuration.
+    Spark will add additional annotations specified by the spark configuration.
   </td>
 </tr>
 </table>
